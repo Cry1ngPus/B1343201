@@ -298,3 +298,27 @@ erDiagram
 | **Client-Search Service** | **HTTPS (REST)** | JSON | 前端發送搜尋請求與接收結果列表。 |
 | **Service-Elasticsearch** | **HTTP / TCP** | JSON (Query DSL) | 後端服務與搜尋引擎叢集之間的通訊，要求低延遲。 |
 | **Sync Worker-DB** | **JDBC / PgProtocol** | Binary / Row Data | 同步工作者從主資料庫讀取變更數據。 |
+---
+## 7. Security Considerations
+---
+### Authentication (身份驗證)
+雖然搜尋功能通常對外開放，但為了防止濫用，我們採取以下策略：
+
+* **Public Access (Guest):** 允許未登入訪客進行基本搜尋，但設有較嚴格的 Rate Limiting (速率限制)。
+* **User Access (Authenticated):** 登入用戶 (帶有 Valid JWT) 享有較高的 API 呼叫額度。
+* **API Gateway:** 所有搜尋請求必須經過 Gateway，由 Gateway 負責驗證 Token 有效性或訪客指紋。
+
+### Authorization (授權與權限)
+* **Search Scope:** 搜尋結果嚴格限制為狀態是 `AVAILABLE` 的書籍。系統層級過濾掉 `SOLD`、`RESERVED` 或 `ARCHIVED` 的書籍，確保買家不會看到無效或已私下交易的商品。
+* **Admin Access:** 只有具備 `ADMIN` 角色的 Token 可以透過特殊參數搜尋所有狀態的書籍（用於管理目的）。
+
+### Data Protection (資料保護)
+* **Index Security (索引安全):**
+    * **Data Minimization:** Elasticsearch 的索引中**絕不儲存**賣家的敏感個資（如真實姓名、學號、電話、Email）。僅儲存非敏感的 `seller_id` 和公開暱稱。
+    * **Mapping Constraints:** 嚴格定義 Index Mapping，防止 Dynamic Mapping 造成的資料污染。
+* **Query Injection Prevention (防注入):**
+    * **Input Sanitization:** 在應用層對使用者輸入的關鍵字進行清洗，移除 Elasticsearch 的保留字符（如 `+`, `-`, `=`, `&`, `|`, `!`, `(`, `)`, `{`, `}`, `[`, `]`, `^`, `"`, `~`, `*`, `?`, `:`, `\`），防止惡意構造的複雜查詢導致 DoS (Denial of Service) 攻擊。
+
+### Infrastructure Security (基礎設施安全)
+* **Internal Access Only:** Elasticsearch 叢集部署於私有子網 (Private Subnet) 內，僅允許 `Book Search Service` 與 `Sync Worker` 透過內部 IP 存取，**絕對禁止**對外網開放 Port 9200。
+* **Rate Limiting:** 針對 `GET /search` 接口實施速率限制（例如：每分鐘最多 60 次請求），防止爬蟲程式耗盡搜尋引擎資源。
