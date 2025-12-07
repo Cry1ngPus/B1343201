@@ -13,3 +13,63 @@
 - **References**:
     * [功能需求文件] `../requirement/book_display_requirement.md`
     * [專案總覽] `../README.md`
+---
+## 2. System Overview
+
+### System Description (系統描述)
+書籍展示與刊登模組是一個使用者導向的子系統，負責處理賣家（學長）的產品資訊輸入、圖片處理、狀態管理，以及向買家（學弟）呈現書籍詳情和可用的交易選項。它是連接賣家與訂單處理系統的門戶。
+
+---
+
+### Design Goals (設計目標)
+
+* **Usability (可用性):** 實現簡潔直觀的刊登流程，減少賣家上架時間 (NFR-BD-U-001)。
+* **Security (安全性):** 嚴格執行圖片上傳檢查（防止惡意 payload），並確保買賣雙方在交易過程中全程保持隱私 (NFR-BD-S-001, NFR-BD-S-002)。
+* **Maintainability (可維護性):** 採用清晰定義的狀態機 (State Machine) 來管理書籍狀態，以利於日後追蹤和維護交易流程。
+* **Performance (效能):** 優化圖片處理和資料載入，確保書籍展示頁面快速響應 (NFR-BD-P-001)。
+
+---
+
+### Architecture Summary (架構摘要)
+
+本模組預計採用**微服務架構 (Microservices)** 的其中一個服務來實現。
+
+* **服務名稱:** `Book-Listing-Service`
+* **職責:** 專注於書籍資料的 CRUD (創建、讀取、更新、刪除) 操作、庫存狀態管理，以及處理與**專門圖片服務 (Image Service)** 的互動。
+* **依賴:** 依賴獨立的 **Image Service** 處理圖片的格式檢查和儲存；依賴 **Notification Service** 在購買時通知賣家 (FR-BD-007)。
+
+---
+
+### System Context Diagram (上下文交換圖)
+
+```mermaid
+graph LR
+    %% 核心系統 (視為一個單一黑箱)
+    System("Book Listing Service<br>(書籍刊登系統)")
+
+    %% 外部實體 (External Entities)
+    Seller("賣家 - 學長")
+    Buyer("買家 - 學弟")
+    ImageStorage("圖片儲存服務")
+    NotificationService("通知服務")
+    OrderService("訂單服務")
+
+    %% 賣家操作
+    Seller -->|刊登/更新書籍資料| System
+    System -->|請求上傳 URL| ImageStorage
+    ImageStorage -->|傳回 URL| System
+    Seller -. 上傳圖片 .-> ImageStorage
+
+    %% 買家瀏覽
+    Buyer -->|獲取書籍詳情| System
+
+    %% 交易與狀態
+    Buyer -->|建立訂單| OrderService
+    OrderService -->|更新書籍狀態| System
+    System -->|賣家通知| NotificationService
+    
+    %% 隱私
+    System -. 隱藏個資 .- Buyer
+```
+
+---
