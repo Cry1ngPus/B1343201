@@ -383,4 +383,25 @@ erDiagram
 * **PDPA (個人資料保護法):** 遵循台灣個資法規範。
     * **資料最小化 (Data Minimization):** 在 `GET /books/{id}` API 中，**絕對不回傳**賣家的真實姓名、電話或 Email，僅回傳非識別化的 `seller_id` 或暱稱。
     * **聯絡隱私:** 買賣雙方僅透過平台提供的通知機制或站內信聯繫，不直接交換私人聯絡方式。
+---
+## 8. Appendices
+
+### Glossary (術語彙編)
+
+| 術語 (Term) | 定義 (Definition) |
+| :--- | :--- |
+| **UUID** | **Universally Unique Identifier**。一種 128 位元的識別碼，用於在資料庫中作為主鍵 (Primary Key)，保證全域唯一性，避免 ID 衝突。 |
+| **JWT** | **JSON Web Token**。一種用於在網路應用環境間傳遞聲明的基於 JSON 的開放標準 (RFC 7519)，本專案用於無狀態 (Stateless) 的身份驗證。 |
+| **Presigned URL** | **預簽名 URL**。由雲端儲存服務 (如 AWS S3) 生成的臨時 URL，允許客戶端在有限時間內直接執行上傳操作，無需透過應用伺服器轉發檔案，能減輕伺服器負載並提升安全性。 |
+| **RBAC** | **Role-Based Access Control**。基於角色的存取控制，根據使用者的角色 (如 Buyer, Seller, Admin) 來限制對系統資源的存取。 |
+| **Payload (Security)** | 在資訊安全語境下，指攻擊者試圖隱藏在看似無害的檔案 (如圖片) 中的惡意程式碼或腳本。本系統需針對圖片 Payload 進行掃描。 |
+| **Atomic Operation** | **原子操作**。指一系列資料庫操作要麼全部成功，要麼全部失敗 (All-or-Nothing)，確保在庫存鎖定過程中不會發生數據不一致或超賣。 |
+| **EXIF** | **Exchangeable Image File Format**。儲存在數位照片中的元數據 (Metadata)，可能包含拍攝日期、相機型號及 **GPS 位置** 等隱私資訊，系統需自動移除以保護賣家隱私。 |
+
+### Change History (變更歷程)
+
+| Version | Date | Author | Description of Changes |
+| :--- | :--- | :--- | :--- |
+| **v1.0** | 2025-12-07 | B1343201 吳煒祥 | Initial draft of the Book Display SDD. (建立書籍展示與交易選項技術設計文件初稿，包含 API 規格、資料模型與安全架構) |
+
 
