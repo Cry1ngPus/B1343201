@@ -73,3 +73,32 @@ graph LR
 ```
 
 ---
+## 3. Architectural Design
+---
+
+```mermaid
+graph TD
+    %% 定義節點
+    User[User - 買家/賣家]
+    Gateway[API Gateway]
+    ListingService[Book Listing Service]
+    DB[(Primary DB - PostgreSQL)]
+    ImageService[Image Service]
+    Storage[(Cloud Storage - S3)]
+    Notif[Notification Service]
+    Order[Order Service]
+
+    %% 定義流程
+    User -->|HTTP Requests| Gateway
+    Gateway -->|Route| ListingService
+
+    subgraph Book Listing System
+        ListingService -->|CRUD Operations| DB
+        ListingService -->|Request Presigned URL| ImageService
+        ListingService -->|Status Update| Notif
+    end
+
+    %% 外部依賴互動
+    ImageService -->|Generate URL| Storage
+    ListingService <-->|Sync Status| Order
+```
