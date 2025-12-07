@@ -322,3 +322,23 @@ erDiagram
 ### Infrastructure Security (基礎設施安全)
 * **Internal Access Only:** Elasticsearch 叢集部署於私有子網 (Private Subnet) 內，僅允許 `Book Search Service` 與 `Sync Worker` 透過內部 IP 存取，**絕對禁止**對外網開放 Port 9200。
 * **Rate Limiting:** 針對 `GET /search` 接口實施速率限制（例如：每分鐘最多 60 次請求），防止爬蟲程式耗盡搜尋引擎資源。
+---
+## 8. Appendices
+
+### Glossary (術語彙編)
+
+| 術語 (Term) | 定義 (Definition) |
+| :--- | :--- |
+| **Elasticsearch** | 一個基於 Lucene 的分散式、RESTful 搜尋與分析引擎。本系統使用它來儲存書籍索引並執行高效能的全文檢索。 |
+| **Inverted Index** | **倒排索引**。搜尋引擎的核心資料結構，它將文檔中的每個單詞映射到包含該單詞的文檔列表，從而實現極快速的關鍵字查詢。 |
+| **Query DSL** | **Domain Specific Language**。Elasticsearch 使用的一種靈活的、基於 JSON 的查詢語言，用於定義複雜的搜尋條件（如 Boolean Query, Filtering, Aggregation）。 |
+| **Relevance Score** | **關聯性分數**。搜尋引擎根據演算法（如 BM25）計算出的數值，代表一本書籍與使用者輸入關鍵字的匹配程度，分數越高排名越前。 |
+| **Boosting** | **加權**。在查詢時人為提高某些欄位（如書名）的權重，使其對最終排序分數的影響力大於其他欄位（如描述）。 |
+| **CDC** | **Change Data Capture**。一種設計模式，用於識別和捕捉資料庫中的資料變更，以便將這些變更即時同步到下游系統（如本案中的 Elasticsearch）。 |
+| **Fuzzy Search** | **模糊搜尋**。一種搜尋技術，允許使用者的輸入存在細微的拼寫錯誤（編輯距離），但仍能找到正確的目標（例如輸入 "algotithm" 找到 "algorithm"）。 |
+
+### Change History (變更歷程)
+
+| Version | Date | Author | Description of Changes |
+| :--- | :--- | :--- | :--- |
+| **v1.0** | 2025-12-07 | B1343201 吳煒祥 | Initial draft of the Book Search SDD. (建立書籍搜尋系統技術設計文件初稿，包含 Elasticsearch 架構、索引策略與同步機制) |
