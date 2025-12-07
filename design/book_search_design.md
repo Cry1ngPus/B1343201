@@ -108,4 +108,29 @@ graph TD
 | **Backend Framework** | **Python (FastAPI)** 或 **Node.js** | 輕量且高效，適合處理搜尋請求的 JSON 轉換與邏輯處理。 |
 | **Sync Mechanism** | **Logstash** 或 **Custom Worker** | 用於實現資料庫到搜尋引擎的 ETL (Extract, Transform, Load) 流程，確保資料新鮮度 (Freshness)。 |
 | **Analyzer** | **IK Analyzer** (中文分詞器) | 針對中文書籍名稱（如「計算機概論」）進行正確斷詞，避免搜尋不到相關書籍的問題。 |
----
+
+### Data Flow and Control Flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Buyer as Buyer (買家)
+    participant API as Search API
+    participant Builder as Query Builder
+    participant ES as Elasticsearch
+
+    Note over Buyer, API: 讀取路徑 (Read Path)
+    Buyer->>API: 1. 發送搜尋請求 (GET /search?q=演算法)
+    
+    API->>API: 2. 輸入驗證與清洗 (Input Sanitization)
+    
+    API->>Builder: 3. 請求構建查詢 (Build Query)
+    Note right of Builder: 應用權重策略 (Boosting)<br/>Title^3, Course^1.5
+    Builder-->>API: 4. 返回 Elasticsearch Query DSL
+
+    API->>ES: 5. 執行搜尋 (Execute Search)
+    ES-->>API: 6. 返回排序後的結果 (Ranked Hits)
+
+    API-->>Buyer: 7. 返回書籍列表 JSON
+```
+
