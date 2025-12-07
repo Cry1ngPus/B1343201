@@ -47,6 +47,16 @@
 | :--- | :--- | :--- | :--- |
 | **TC-PRV-001** | **賣家個資隱藏** | 1. 賣家 (User A) 刊登一本書。<br>2. 買家 (User B) 呼叫 `GET /books/{id}` 獲取該書詳情。<br>3. 檢查回傳的 JSON Payload。 | JSON 中**絕對不可包含** User A 的 `email`, `phone_number` 或真實姓名 (`real_name`)。僅允許顯示 `seller_id` 或 `nickname`。 |
 
+### 3.4 效能測試 (Performance Testing)
+
+針對系統在高負載下的穩定性與響應速度進行驗證。
+
+| 測試編號 | 測試名稱 | 測試場景與條件 | 預期結果 (Expected Result) |
+| :--- | :--- | :--- | :--- |
+| **TC-PERF-001** | **刊登 API 響應時間** | 1. 模擬單一用戶呼叫 `POST /books`。<br>2. 不包含圖片上傳時間（僅計算 Metadata 寫入）。 | API 平均響應時間應 **< 800ms (毫秒)**。 |
+| **TC-PERF-002** | **詳情頁載入速度** | 1. 呼叫 `GET /books/{id}`。<br>2. 該書籍包含 5 張高解析度圖片 URL。 | API 響應時間應 **< 300ms** (圖片由客戶端異步載入，不計入 API 時間)。 |
+| **TC-PERF-003** | **高併發壓力測試** | 1. 使用 JMeter 或 k6 模擬 **50 位賣家同時** 執行書籍上架操作。<br>2. 持續時間 5 分鐘。 | 1. 錯誤率 (Error Rate) 為 **0%**。<br>2. 95% 的請求響應時間 (P95) 應低於 **2000ms**。<br>3. 資料庫不應出現 Deadlock。 |
+
 ---
 
 ## 4. 測試資料準備 (Test Data Setup)
@@ -65,3 +75,4 @@
 // 預設惡意圖片 (用於安全性測試)
 // 檔案: exploit.jpg (內含 PHP webshell 代碼)
 ```
+
