@@ -75,6 +75,7 @@ graph LR
 ---
 ## 3. Architectural Design
 ---
+### System Architecture Diagram (系統架構圖)
 
 ```mermaid
 graph TD
@@ -102,3 +103,20 @@ graph TD
     ImageService -->|Generate URL| Storage
     ListingService <-->|Sync Status| Order
 ```
+
+### Component Breakdown (組件拆解)
+
+| 組件名稱 (Component) | 職責 (Responsibilities) | 互動對象 (Interactions) |
+| :--- | :--- | :--- |
+| **Book Listing API** | 負責處理所有書籍相關的 HTTP 請求（刊登、更新、刪除、查詢詳情）；執行身份驗證與輸入資料驗證（如：檢查必填欄位、價格合理性）。 | 接收來自 **API Gateway** 的流量；對 **Primary DB** 進行 CRUD 操作。 |
+| **Status Management Logic** | 核心業務邏輯，負責管理書籍的生命週期狀態 (State Machine)。確保書籍從「刊登中」正確流轉至「已保留」或「已售出」，防止狀態不一致。 | 監聽 **Order Service** 的訂單事件；觸發 **Notification Service** 發送通知給賣家。 |
+| **Image Handler** | 專門處理圖片上傳的安全性流程。它不直接接收圖片檔案，而是負責向圖片服務請求上傳憑證。 | 呼叫獨立的 **Image Service** 獲取 Presigned URL；將上傳成功後的最終 URL 存入資料庫。 |
+
+### Technology Stack (技術堆疊)
+
+| 類別 (Category) | 技術選型 (Technology) | 選擇理由 (Rationale) |
+| :--- | :--- | :--- |
+| **Backend Framework** | **Python (FastAPI)** 或 **Node.js (NestJS)** | 提供高效能的非同步處理能力，適合處理大量的 I/O 操作（如頻繁的資料庫讀寫和外部 API 呼叫）。 |
+| **Primary Database** | **PostgreSQL** | 強大的關聯式資料庫，支援複雜查詢與 ACID 事務特性，確保書籍庫存與交易狀態的一致性。 |
+| **Object Storage** | **AWS S3** 或 **Google Cloud Storage** | 用於儲存書籍圖片（非結構化資料），提供高可用性、擴展性以及原生的 Presigned URL 安全上傳功能。 |
+| **Communication** | **RESTful API** | 對前端提供標準 REST API，方便與網頁或 App 端整合。 |
