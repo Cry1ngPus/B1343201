@@ -307,3 +307,48 @@ erDiagram
 3.  **Rollback 機制:** 每個遷移腳本都必須對應一個 `down` 腳本 (Revert script)，以確保在部署失敗時能安全回滾資料庫狀態。
    
 ---
+
+## 6. External Interfaces
+
+---
+
+### User Interface (使用者介面)
+本模組提供兩個核心的 Web 介面（Responsive Web Design）：
+
+1.  **賣家刊登頁面 (Seller Listing Page):**
+    * **Drag-and-Drop Upload:** 支援拖曳上傳圖片，並提供上傳進度條與預覽功能。
+    * **Form Validation:** 即時檢查必填欄位（書名、價格），並以紅框提示錯誤。
+    * **UX Note:** 針對手機端優化，方便使用者直接調用相機拍照上傳。
+
+2.  **書籍詳情頁面 (Book Detail Page):**
+    * **Image Gallery:** 支援圖片輪播 (Carousel) 與點擊放大檢視，以利買家檢查書籍瑕疵。
+    * **Status Badges:** 清晰顯示書籍目前狀態（如 `Available` 為綠色，`Reserved` 為黃色）。
+    * **Privacy View:** 確保頁面上完全隱藏賣家的個人聯絡資訊 (Email/Phone)。
+
+### External APIs (外部 API 整合)
+
+本服務依賴以下外部系統或內部微服務介面：
+
+* **Cloud Storage API (AWS S3 / Google Cloud Storage):**
+    * 用於生成 Presigned URL 以及由前端直接執行 `PUT` 請求上傳圖片檔案。
+* **Image Service (Internal):**
+    * 提供 gRPC 接口 `GenerateUploadUrl`，負責與雲端儲存溝通簽發憑證。
+* **Order Service (Internal):**
+    * 提供 Webhook 或 Message Queue 事件，通知本服務鎖定書籍狀態 (`LockInventory`)。
+* **Notification Service (Internal):**
+    * 接收本服務發出的 `SellerNotification` 事件，發送 Email 或站內信。
+
+### Hardware Interfaces (硬體介面)
+* **N/A (不適用):** 本系統為純軟體 Web 服務，無直接的專用硬體介面。
+* **Client Side:** 依賴使用者裝置（手機/電腦）的 **相機 (Camera)** 與 **檔案系統 (File System)** 進行照片拍攝與選取。
+
+### Network Protocols/Communication (網路協定與通訊)
+
+| 通訊類型 | 協定 (Protocol) | 資料格式 (Format) | 用途 |
+| :--- | :--- | :--- | :--- |
+| **Client-Server** | **HTTPS (REST)** | JSON | 前端網頁與後端 API 溝通。強制使用 TLS 1.2+ 加密。 |
+| **Inter-Service** | **gRPC** | Protobuf | 微服務內部通訊 (例如: Listing Service <-> Image Service)，追求低延遲與高效能。 |
+| **Image Upload** | **HTTPS (PUT)** | Binary (Image Blob) | 前端直接傳輸二進制圖片檔至雲端儲存。 |
+
+---
+
