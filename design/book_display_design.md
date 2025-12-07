@@ -352,3 +352,35 @@ erDiagram
 
 ---
 
+## 7. Security Considerations
+
+---
+### Authentication (身份驗證)
+本系統採用 **JWT (JSON Web Token)** 機制進行無狀態 (Stateless) 的身份驗證，確保微服務之間的擴展性。
+
+* **登入流程:** 使用者通過 `User Service` 登入後獲取 `Access Token`。
+* **API 請求:** 賣家在呼叫 `POST /books` 或 `PUT /books/{id}` 時，必須在 HTTP Header 中攜帶 `Authorization: Bearer <token>`。
+* **Token 內容:** Token Payload 中包含 `user_id` 與 `role`，但不包含敏感個資。
+
+### Authorization (授權與權限)
+採用 **RBAC (Role-Based Access Control)** 結合 **資源擁有權檢查 (Resource-Based Access Control)**。
+
+* **角色模型 (Role Models):**
+    * `GUEST`: 僅能瀏覽書籍詳情 (`GET`)。
+    * `USER (Seller/Buyer)`: 可以刊登書籍、購買書籍。
+    * `ADMIN`: 可以強制下架違規書籍。
+* **資源權限 (Permission Logic):**
+    * **編輯/刪除保護:** 系統必須檢查 `Books.seller_id` 是否等於當前請求者的 `user_id`。嚴格禁止使用者 A 修改使用者 B 的書籍。
+
+### Data Protection (資料保護)
+* **傳輸加密 (Encryption in Transit):** 所有 API 通訊強制使用 **TLS 1.2+ (HTTPS)**，防止中間人攻擊 (MITM) 竊取 Token 或交易資訊。
+* **輸入淨化 (Input Sanitization):** 針對 `title`、`description` 等文字欄位進行 XSS 過濾；針對 SQL 查詢使用參數化查詢 (Prepared Statements) 防止 SQL Injection。
+* **圖片安全 (Image Security):**
+    * **Payload 檢查:** 嚴格驗證上傳檔案的 Magic Number (File Signature)，確保檔案確實為 PNG/JPG 圖片，而非偽裝的執行檔。
+    * **隱私保護:** 系統自動移除圖片的 EXIF Metadata（如 GPS 位置資訊），防止洩漏賣家拍攝地點。
+
+### Compliance (合規性)
+* **PDPA (個人資料保護法):** 遵循台灣個資法規範。
+    * **資料最小化 (Data Minimization):** 在 `GET /books/{id}` API 中，**絕對不回傳**賣家的真實姓名、電話或 Email，僅回傳非識別化的 `seller_id` 或暱稱。
+    * **聯絡隱私:** 買賣雙方僅透過平台提供的通知機制或站內信聯繫，不直接交換私人聯絡方式。
+
