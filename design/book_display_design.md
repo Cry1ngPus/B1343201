@@ -120,3 +120,33 @@ graph TD
 | **Primary Database** | **PostgreSQL** | 強大的關聯式資料庫，支援複雜查詢與 ACID 事務特性，確保書籍庫存與交易狀態的一致性。 |
 | **Object Storage** | **AWS S3** 或 **Google Cloud Storage** | 用於儲存書籍圖片（非結構化資料），提供高可用性、擴展性以及原生的 Presigned URL 安全上傳功能。 |
 | **Communication** | **RESTful API** | 對前端提供標準 REST API，方便與網頁或 App 端整合。 |
+
+### Data Flow and Control Flow:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Seller as Seller (賣家)
+    participant API as Book Listing API
+    participant ImageSvc as Image Service
+    participant S3 as Cloud Storage (S3)
+    participant DB as Primary DB
+
+    Note over Seller, API: Step 1: 圖片上傳 (Image Upload)
+    Seller->>API: 1. 請求上傳 (Request Upload URL)
+    API->>ImageSvc: 2. 獲取 Presigned URL
+    ImageSvc-->>API: 3. 返回安全 URL
+    API-->>Seller: 4. 返回 Presigned URL
+    
+    Note over Seller, S3: 直接上傳，繞過 API Server
+    Seller->>S3: 5. 上傳圖片檔案 (PUT Image)
+    S3-->>Seller: 6. 上傳成功 (200 OK)
+
+    Note over Seller, DB: Step 2: 提交書籍資料 (Submit Data)
+    Seller->>API: 7. 提交書籍資訊 (含圖片 URL, 價格, 狀態)
+    API->>API: 8. 驗證資料 (Validation)
+    API->>DB: 9. 寫入書籍資料 (Insert Book)
+    DB-->>API: 10. 確認寫入
+    API-->>Seller: 11. 刊登成功 (Book Created)
+```
+
