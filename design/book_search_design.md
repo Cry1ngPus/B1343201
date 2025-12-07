@@ -257,3 +257,44 @@ erDiagram
 3.  **無縫切換 (Atomic Switch):**
     * 執行原子操作：將 `books_alias` 指向從 `books_v1` 切換到 `books_v2`。
     * 確認無誤後，刪除舊索引 `books_v1`。
+---
+## 6. External Interfaces
+---
+### User Interface (使用者介面)
+本模組提供搜尋相關的 Web 介面元件，旨在協助使用者快速篩選與瀏覽：
+
+1.  **搜尋列 (Search Bar):**
+    * **功能:** 支援關鍵字輸入，並具備 **自動完成 (Autocomplete)** 提示功能（基於熱門搜尋詞或書名索引）。
+    * **UX Note:** 搜尋按鈕應明顯，並支援按下 "Enter" 鍵觸發搜尋。
+
+2.  **分面導航/篩選器 (Faceted Navigation / Filters):**
+    * **功能:** 在搜尋結果頁側面提供篩選選項，包括：
+        * **價格範圍 (Price Range):** 滑桿或輸入最低/最高價。
+        * **新舊程度 (Condition):** 核取方塊 (Checkbox) 選擇 `全新`, `九成新` 等。
+        * **排序選單 (Sorting):** 下拉選單提供 `相關性最高` (預設), `價格由低到高`, `最新上架`。
+
+3.  **搜尋結果列表 (Search Results List):**
+    * **功能:** 以卡片形式展示書籍，包含封面縮圖、書名、**高亮關鍵字 (Highlighting)**、價格與賣家資訊。
+    * **空狀態 (Empty State):** 當無結果時，顯示友善提示並推薦熱門書籍。
+
+### External APIs (外部 API 整合)
+
+本服務高度依賴以下外部系統介面：
+
+* **Elasticsearch REST API:**
+    * 本服務作為 Elasticsearch 的客戶端，透過 HTTP/TCP 協定發送 Query DSL (Domain Specific Language) 進行查詢。
+    * 使用 `_search`, `_count`, `_analyze` 等端點。
+* **Primary Database (PostgreSQL) Replication Stream:**
+    * Sync Worker 透過邏輯複製 (Logical Replication) 或 JDBC 介面讀取主資料庫的變更日誌 (WAL)，以同步資料。
+
+### Hardware Interfaces (硬體介面)
+* **N/A (不適用):** 本系統為純軟體服務。
+* **Client Side:** 依賴使用者裝置的鍵盤（輸入關鍵字）與螢幕（瀏覽結果）。
+
+### Network Protocols/Communication (網路協定與通訊)
+
+| 通訊類型 | 協定 (Protocol) | 資料格式 (Format) | 用途 |
+| :--- | :--- | :--- | :--- |
+| **Client-Search Service** | **HTTPS (REST)** | JSON | 前端發送搜尋請求與接收結果列表。 |
+| **Service-Elasticsearch** | **HTTP / TCP** | JSON (Query DSL) | 後端服務與搜尋引擎叢集之間的通訊，要求低延遲。 |
+| **Sync Worker-DB** | **JDBC / PgProtocol** | Binary / Row Data | 同步工作者從主資料庫讀取變更數據。 |
