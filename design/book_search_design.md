@@ -324,7 +324,7 @@ erDiagram
 * **Rate Limiting:** 針對 `GET /search` 接口實施速率限制（例如：每分鐘最多 60 次請求），防止爬蟲程式耗盡搜尋引擎資源。
 ---
 ## 8. Appendices
-
+---
 ### Glossary (術語彙編)
 
 | 術語 (Term) | 定義 (Definition) |
@@ -342,3 +342,5 @@ erDiagram
 | Version | Date | Author | Description of Changes |
 | :--- | :--- | :--- | :--- |
 | **v1.0** | 2025-12-07 | B1343201 吳煒祥 | Initial draft of the Book Search SDD. (建立書籍搜尋系統技術設計文件初稿，包含 Elasticsearch 架構、索引策略與同步機制) |
+
+### Commit
