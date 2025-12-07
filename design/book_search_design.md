@@ -18,3 +18,47 @@
 
 ---
 
+## 2. System Overview
+
+### System Description (系統描述)
+書籍搜尋系統是一個專門優化讀取效能 (Read-Optimized) 的服務。它從主資料庫中同步書籍資料，建立全文索引，並提供一個低延遲的查詢介面，讓買家能透過書名、課程名稱、老師姓名等模糊關鍵字快速找到所需書籍。
+
+### Design Goals (設計目標)
+
+* **Performance (效能):** 確保 95% 的搜尋請求能在 **500ms** 內返回結果 (NFR-BS-P-001)。
+* **Relevance (精準度):** 實作加權排序，確保「書名完全匹配」的結果排在「課程匹配」之前 (FR-BS-004)。
+* **Freshness (即時性):** 書籍狀態變更（如已售出）必須在數秒內反映在搜尋結果中，避免買家看到無效庫存 (NFR-BS-A-001)。
+* **Scalability (擴展性):** 架構需支援水平擴展，以應對未來書籍數量增長。
+
+### Architecture Summary (架構摘要)
+
+本模組採用 **CQRS (命令查詢職責分離)** 模式的變體：
+
+* **寫入端 (Write Side):** `Book-Listing-Service` 負責寫入 Primary DB (PostgreSQL)。
+* **同步端 (Sync Side):** 透過 **Sync Worker** 或事件驅動機制，將變更異步推送到 Elasticsearch。
+* **讀取端 (Read Side):** `Book-Search-Service` 直接查詢 Elasticsearch 來獲取搜尋結果。
+
+### System Context Diagram (上下文交換圖)
+
+```mermaid
+graph LR
+    %% 核心搜尋系統
+    System("Book Search Service<br>(書籍搜尋系統)")
+
+    %% 外部實體
+    Buyer("買家 - 學弟")
+    ListingService("書籍刊登服務")
+    PrimaryDB("主資料庫 (PostgreSQL)")
+    Elasticsearch("搜尋引擎 (Elasticsearch)")
+
+    %% 讀取流程 (搜尋)
+    Buyer -->|1. 輸入關鍵字/篩選| System
+    System -->|2. 查詢 Query DSL| Elasticsearch
+    Elasticsearch -->|3. 返回排序結果| System
+    System -->|4. 返回 JSON 列表| Buyer
+
+    %% 同步流程 (Indexing)
+    ListingService -.->|寫入書籍數據| PrimaryDB
+    PrimaryDB -.->|資料變更 CDC| System
+    System -.->|更新索引| Elasticsearch
+```
