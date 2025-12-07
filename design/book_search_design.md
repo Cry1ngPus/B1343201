@@ -1,7 +1,7 @@
 # 🔍 書籍搜尋系統 - 技術設計文件 (Book Search SDD)
-
+---
 ## 1. Introduction
-
+---
 - **Purpose**: 定義「書籍搜尋模組」的技術架構、索引策略與查詢邏輯。旨在解決傳統關聯式資料庫無法滿足的高效能全文檢索與多維度篩選（書名、課程、老師）需求。
 - **Scope**:
     * **In Scope (範圍內)**: 書籍搜尋 API (`GET /search/books`)、搜尋引擎 (Elasticsearch) 的索引結構設計 (Mapping)、加權排序演算法 (Ranking Logic)、資料庫與搜尋引擎之間的資料同步機制 (Data Sync)。
@@ -17,9 +17,8 @@
     * [專案總覽] `../README.md`
 
 ---
-
 ## 2. System Overview
-
+---
 ### System Description (系統描述)
 書籍搜尋系統是一個專門優化讀取效能 (Read-Optimized) 的服務。它從主資料庫中同步書籍資料，建立全文索引，並提供一個低延遲的查詢介面，讓買家能透過書名、課程名稱、老師姓名等模糊關鍵字快速找到所需書籍。
 
@@ -62,3 +61,51 @@ graph LR
     PrimaryDB -.->|資料變更 CDC| System
     System -.->|更新索引| Elasticsearch
 ```
+---
+## 3. Architectural Design
+---
+### System Architecture Diagram (系統架構圖)
+
+```mermaid
+graph TD
+    %% 定義節點
+    User[Buyer - 買家]
+    Gateway[API Gateway]
+    SearchService[Book Search Service]
+    ES[(Elasticsearch Cluster)]
+    
+    subgraph Data Synchronization
+        PrimaryDB[(Primary DB - PostgreSQL)]
+        SyncWorker[Sync Worker / Logstash]
+    end
+    
+    ListingService[Book Listing Service]
+
+    %% 搜尋流程 (Read Path)
+    User -->|GET /search| Gateway
+    Gateway -->|Route| SearchService
+    SearchService -->|Query DSL| ES
+    ES -->|Ranked Results| SearchService
+
+    %% 索引流程 (Write/Sync Path)
+    ListingService -->|Insert/Update| PrimaryDB
+    PrimaryDB -.->|Change Events| SyncWorker
+    SyncWorker -->|Index Document| ES
+```
+### Component Breakdown (組件拆解)
+
+| 組件名稱 (Component) | 職責 (Responsibilities) | 互動對象 (Interactions) |
+| :--- | :--- | :--- |
+| **Search API Handler** | 接收前端的搜尋請求（關鍵字、篩選條件、分頁）；執行輸入驗證與預處理（例如：去除特殊字符、關鍵字正規化）。 | 接收來自 **API Gateway** 的流量；將請求轉發給 **Query Builder**。 |
+| **Query Builder** | 將使用者的搜尋意圖（如：「演算法 老師A」）轉換為 **Elasticsearch Query DSL**。負責設定權重（Boosting），例如讓 `title` 欄位的權重高於 `description`。 | 被 **Search API Handler** 呼叫；向 **Elasticsearch** 發送查詢請求。 |
+| **Data Sync Worker** | 負責維持 Primary DB 與 Elasticsearch 之間的資料一致性。監聽資料庫變更或定期輪詢，將最新的書籍狀態（如：已售出）更新到索引中。 | 讀取 **Primary DB** 的變更日誌；對 **Elasticsearch** 執行 Index/Update 操作。 |
+
+### Technology Stack (技術棧)
+
+| 類別 (Category) | 技術選型 (Technology) | 選擇理由 (Rationale) |
+| :--- | :--- | :--- |
+| **Search Engine** | **Elasticsearch** (v8+) | 業界標準的全文檢索引擎，支援倒排索引、模糊搜尋 (Fuzzy Search) 與高效能的聚合分析，滿足 500ms 內回傳的需求。 |
+| **Backend Framework** | **Python (FastAPI)** 或 **Node.js** | 輕量且高效，適合處理搜尋請求的 JSON 轉換與邏輯處理。 |
+| **Sync Mechanism** | **Logstash** 或 **Custom Worker** | 用於實現資料庫到搜尋引擎的 ETL (Extract, Transform, Load) 流程，確保資料新鮮度 (Freshness)。 |
+| **Analyzer** | **IK Analyzer** (中文分詞器) | 針對中文書籍名稱（如「計算機概論」）進行正確斷詞，避免搜尋不到相關書籍的問題。 |
+---
