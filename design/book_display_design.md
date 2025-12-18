@@ -403,9 +403,7 @@ erDiagram
 | Version | Date | Author | Description of Changes |
 | :--- | :--- | :--- | :--- |
 | **v1.0** | 2025-12-07 | B1343201 吳煒祥 | Initial draft of the Book Display SDD. (建立書籍展示與交易選項技術設計文件初稿，包含 API 規格、資料模型與安全架構) |
-
-### Commit
-
+| **v2.0** | 2025-12-18 | B1343201 吳煒祥 | 改善今日老師要求之無法量化點|
 
 
 
