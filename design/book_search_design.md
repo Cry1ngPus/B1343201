@@ -342,5 +342,4 @@ erDiagram
 | Version | Date | Author | Description of Changes |
 | :--- | :--- | :--- | :--- |
 | **v1.0** | 2025-12-07 | B1343201 吳煒祥 | Initial draft of the Book Search SDD. (建立書籍搜尋系統技術設計文件初稿，包含 Elasticsearch 架構、索引策略與同步機制) |
-
-### Commit
+| **v1.0** | 2025-12-18 | B1343201 吳煒祥 | New Update |
